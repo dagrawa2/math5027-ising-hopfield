@@ -1,0 +1,148 @@
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amsfonts}
+\newcommand{\calT}{\mathcal{T}}
+\newcommand{\taubar}{\bar{\tau}}
+\newcommand{\sgn}{\operatorname{sgn}}
+
+\title{Using a Modified Lattice Ising Model as a Hopfield Network}
+\author{Devanshu Agrawal}
+\date{December 5, 2014}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+A hopfield network is a neural network that remembers a set of states and returns a state from its memory bank that correlates most closely to a given input state. Thus, a Hopfield network exhibits associative memory and is used to perform nearest-neighbor searches. Formally, a Hopfield network with $N$ neurons is a complete undirected graph on $N$ vertices with weighted (possibly $0$ weight) edges. We label the neurons $0$ through $N-1$, and each neuron takes the value $1$ or $-1$. Thus, the $i$th neuron represents the $i$th digit in a binary sequence of $N$ $1$'s and $-1$'s. The space of all possible states is $\{-1, 1\}^N$. Given a training set $\calT\subset \{-1, 1\}^N$, the weight $W_{ij}$ between neurons $i$ and $j$ can be computed by the Hebbian learning rule:
+\begin{equation} \label{hebbian}
+W_{ij} = \frac{1}{|\calT|} \sum_{\mathbf{t}\in\calT} t_i t_j,
+\end{equation}
+where $t_i$ is the $i$th element in the binary $N$-vector $\mathbf{t}$. We define an energy function $E_H:\{-1,1\}^N\mapsto \mathbb{R}$ given by
+\begin{equation} \label{hopfieldE}
+E_H(\mathbf{t}) = -\frac{1}{2}\sum_{i,j=0}^{N-1} W_{ij} t_i t_j.
+\end{equation}
+The states for which $E_H$ is at a local minimum are the states that the Hopfield network ``remembers''. The Hebbeian learning rule trains the network so that it remembers the states in the training set $\calT$. Finally, we equip the Hopfield network with an evolution rule such that any input state evolves to the nearest energy minimum. For example, given an input state $\mathbf{t}_0$, we define the recursive sequence
+\begin{equation} \label{evolution}
+\mathbf{t}_n = \sgn(\mathbf{W}\mathbf{t}_{n-1}),
+\end{equation}
+where $\mathbf{t}_n\in\{-1, 1\}^N$ are column vectors and $\mathbf{W}$ is the adjacency matrix with entries $W_{ij}$. Such a sequence will converge to a remembered state \cite{rojas}.
+
+A concept that is closely related to the Hopfield network is the Ising model. An Ising model is a model in statistical mechanics that is often used to illustrate the occurrence of magnetic phase transitions and other critical phenomena. A two-dimensional (2D) Ising model is a 2D lattice of ``spin sites'' so that the spins of adjacent sites are coupled. Let $N\times L$ be the dimensions of the lattice, and label the sites $(0,0)$ through $(N-1,L-1)$. Let $\sigma_{ij}$ be the spin at site $(i,j)$. Each site is either spin up ($\sigma_{ij}=1$) or spin down ($\sigma_{ij}=-1$). The space of all possible spin configurations is therefore isomorphic to $\{-1,1\}^{NL}$. We define an energy function $E_I:\{-1,1\}^{NL}\mapsto \mathbb{R}$ given by
+\begin{equation} \label{isingE}
+E_I(\sigma) = -\frac{1}{2}\sum_{i,k=0}^N\sum_{j,\ell=0}^L g_{ij,k\ell}\sigma_{ij}\sigma_{k\ell},
+\end{equation}
+where $g_{ij,k\ell}$ is the coupling energy between sites $(i,j)$ and $(k,\ell)$. Since the sites are connected in a lattice, then $g_{ij,k\ell}=0$ for sites that are not adjacent in the lattice. This is a key distinction between Hopfield networks and Ising models. Except for this fact, letting $L=1$ reveals the similarity between the energy functions \eqref{hopfieldE} and \eqref{isingE}. The probability of differen spin configurations follows a Boltzmann distribution. Thus, the dynamics of the Ising model is governed by the partition function
+\begin{equation} \label{partition}
+Z = \sum_{\sigma\in\{-1,1\}^{NL}} \exp(-\beta E_I(\sigma)),
+\end{equation}
+where $\beta = \frac{1}{T}$ is the inverse temperature. Note that $Z$ encodes the evolution rule for the Ising model \cite{molignini}.
+
+Remarkably, a 2D Ising model on an $N\times L$ lattice is equivalent to the evolution of a 1D quantum Ising chain of $N$ sites over $L$ imaginary time steps in a transverse magnetic field. This means that the first dimension of the 2D Ising model can be thought of as space, while the second dimension can be thought of as (imaginary) time. Thus, a 2D spin configuration can be thought of as a possible history of a 1D quantum spin field, and the partition function \eqref{partition} can be interpreted as a discrete sum over histories through imaginary time, where inverse temperature $\beta$ plays the role of imaginary time. Adjacent spin sites $i$ and $i+1$ on the Ising chain at time $j$ are coupled by
+\[ J_{ij} = g_{ij,(i+1)j}. \]
+Additionally, every site is coupled to its immediate future with coupling energy
+\[ h_{ij} = g_{ij,i(j+1)}. \]
+This time coupling is due to the transverse magnetic field. This relationship between the 2D Ising model and the 1D quantum Ising chain is key to solving the conformal 2D Ising model exactly. In particular, it allows 2D spin configurations to be interpreted as fermionic fields over space-time governed by a conformally invariant Lagrangian \cite{molignini}.
+
+The strong similarity between Hopfield networks and Ising models motivates the following question: Can a 2D Ising model be used as a Hopfield network? Equivalently, can the evolution of a 1D quantum Ising chain perform nearest-neighbor searches? The complete architecture of a Hopfield network allows it to learn correlations between any two neurons, while the Ising chain is limited to nearest-neighbor interactions. On the other hand, the coupling weights of a Hopfield network are constant in time, while the coupling constants of the Ising chain can vary with time. In this report, I use this last fact to show that a quantum Ising chain -- implemented as a classical 2D Ising model -- together with two modifications to the energy function and evolution rule can, in fact, act like a Hopfield network.
+
+\section{Methodology}
+
+In general, let all indexing variables begin at $0$. Let $H$ be a Hopfield network of $N$ neurons and weights $W_{ij}$ determined by Hebbian learning, and assume $N$ is prime. We want an Ising model $I$ on a space-time lattice that acts like $H$. Begin the construction of $I$ by first defining an $N\times (N-1)$ lattice, with the first dimension representing space and the second representing (imaginary) time. Every site in $I$ has a space-time index $(i,j)$. But every site also represents a neuron in $H$, and hence to every site we assign an additional label: Define a function $n:I\mapsto H$ by
+\begin{equation} \label{n}
+n(i,j) = i(j+1) \pmod{N}.
+\end{equation}
+Then, the space coupling $J_{ij}$ between sites $(i,j)$ and $(i+1,j)$ and the time coupling $h_{ij}$ between sites $(i,j)$ and $(i,j+1)$ are given by
+\begin{align}
+\label{J}
+J_{ij} &= W_{n(i,j),n(i+1,j)} \\
+\label{h}
+h_{ij} &= W_{n(i,j),n(i,j+1)},
+\end{align}
+where $0\leq i\leq N-1$ and $0\leq j\leq N-2$. Notice that $i=N-1$ implies that sites $(0,j)$ and $(N-1,j)$ are coupled for each $j$, so that the space dimension is compactified to a cycle. Hence, $I$ takes the shape of a finite cylindrical lattice.
+
+In the above architecture, the $j$th time slice of $I$ is a cyclic subgraph of $H$ with $(j+1)$-nearest adjacencies. Each time slice of $I$ is characterized by a different distance scale for neuron interaction in $H$.
+For example, if $N=7$, then Equation \eqref{n} implies that the first three time slices ($j=0,1,2$) of $I$ represent the following subcycles of $H$:
+\begin{align*}
+(0,1,2,3,4,5,6) \\
+(0,2,4,6,1,3,5) \\
+(0,3,6,2,5,1,3).
+\end{align*}
+By assuming that $N$ is prime, we guarantee that together the $N-1$ time slices comprising $I$ account for all adjacencies in $H$; the time slices of $I$ form a ``partition'' of $H$. Therefore, by allowing the couplings $J_{ij}$ and $h_{ij}$ to vary with time, we can account for the entire architecture of $H$. Note that we should think of $I$ as one period of an infinite history; after the $(n-1)$st time slice, we should imagine that $I$ repeats. Thus, the couplings vary periodically with time.
+
+We let $\sigma$ denote a 2D spin configuration on $I$, with $\sigma_{ij}$ the spin at site $(i,j)$. Equivalently, $\sigma$ is a possible history of a 1D quantum Ising chain, with $\sigma_{ij}$ the spin of neuron $n(i,j)$ in $H$ after $j$ time steps. Let $\tau$ be another spin field, with $\tau_{kj}$ the spin of the $k$th neuron in $H$ after $j$ time steps. Then,
+\begin{equation} \label{tau}
+\tau_{kj} = \sigma_{ij}
+\mbox{ such that }
+n(i,j) = k.
+\end{equation}
+
+Given a fixed 1D input $\{\tau_{k0}=\sigma_{k0}\}_{k=0}^{N-1}$ on the $0$th time slice, we want to find the 2D spin configuration for which the ``energy'' of $I$ is a minimum. This configuration corresponds to the expected history for a 1D quantum spin chain, and this history should end with the result of a nearest-neighbor search. For this to work well, I made two modifications to the evolution rule for $I$:
+\begin{enumerate}
+\item The time couplings are no longer symmetric but instead point to the future. In particular, the energy of site $(i,j+1)$ depends on site $(i,j)$ with strength $h_{ij}$, but the energy at site $(i,j)$ is independent of site $(i,j+1)$.
+\item Given a fixed 1D input on the $0$th time slice, the final 1D state is not the $(N-1)st$ time slice. Instead, the final 1D state is the average of all 1D states taken over the $N-1$ time slices comprising $I$. Thus, the average final spin of the $k$th neuron is given by
+\begin{equation} \label{average}
+\taubar_{k} = \frac{1}{N-1}\sum_{j=0}^{N-2} \tau_{kj}
+= \frac{1}{N-1}\sum_{\{(i,j): n(i,j) = k\}} \sigma_{ij}.
+\end{equation}
+\end{enumerate}
+
+The desired 2D spin configuration (i.e., expected history) is found by running a Monty Carlo simulation. In the simulation, we randomly select a site in $I$ and flip the spin with Boltzmann probability. Fix a value for the inverse temperature $\beta$ and four integer parameters $Z_1,Z_2,Z_3,Z_4$ that will control the stochastic aspects and duration of the simulation. Given a 1D input $S_0\in\{-1,1\}^N$, the following algorithm generates a sequence $S_0,S_1,\ldots,S_m,\ldots,S_{Z_4}$ of states in $\{-1,1\}^N$. Starting at $m=0$,
+\begin{enumerate}
+\item Randomize every site $(i,j)$ in $I$ to a spin $\sigma_{ij}=\pm 1$. Fix a 1D input $S_m$ to the $0$th time slice; let $\sigma_{i0} = (S_m)_i$.
+\item Randomly select a site $(i,j)$ with $i\geq 1$. Compute the change in energy $\Delta E$ that would result if the spin at site $(i,j)$ were flipped. Using Modification 1, this change in energy is given by
+\begin{equation} \label{DeltaE}
+\Delta E = 2(J_{i-1,j}\sigma_{i-1,j}+J_{i,j}\sigma_{i+1,j}+h_{i,j-1}\sigma_{i,j-1})\sigma_{ij}.
+\end{equation}
+If $\Delta E <0$, then flip the spin at $(i,j)$. Otherwise, flip the spin with probability $\exp(-\beta\Delta E)$.
+\item Repeat Step 2 $Z_1$ times.
+\item Repeat Step 2 $Z_2$ times. But after every $Z_3$ runs, compute and record the average spins $\taubar_k$ given by Equation \eqref{average} in Modification 2. After the $Z_2$ runs are complete, average the recordings and take the signs of the resulting numbers to obtain final values for the $\taubar_k$. Let $(S_{m+1})_k = \taubar_k$.
+\item Let $m:= m+1$ and repeat all of the above. Repeat this $Z_4$ times.
+\end{enumerate}
+Then, $S_{Z_4}$ is the result of a nearest-neighbor search given $S_0$.
+
+Both the construction of $I$ and the above algorithm were implemented in the programming language Python. In the next section, I illustrate the above scheme with an example run.
+
+\section{Results}
+
+I ran the following example to test my model: I defined an Ising model $I$ to remember and process states of $N=11$ bits; i.e., the space of all states is $\{-1, 1\}^{11}$. For clarity, let us represent elements of $\{-1,1\}^{11}$ as strings of $0$'s and $1$'s, with a $0$ representing a $-1$. I used the following values for the inverse temperature and stochastic simulation parameters:
+\begin{equation}
+(\beta,Z_1,Z_2,Z_3,Z_4) = (10,20000,20000,10,10),
+\end{equation}
+and I used the following training set:
+\begin{equation}
+\calT = \{10000000000, 00001100011\}.
+\end{equation}
+I then had my model perform nearest-neighbor searches for five different inputs listed in the table below. For each input, I ran the model $10$ times. For each input, the table below lists the most frequent output (out of $10$ trials) along with its frequency of occurrence.
+
+\begin{center}
+\begin{tabular}{|c|c|c|} \hline
+Input & Most Frequent Output & Frequency \\ \hline
+00000000001 & 00001100011 & 100\% \\ \hline
+11000000000 & 10000000000 & 100\% \\ \hline
+10000011100 & 11110011100 & 100\% \\ \hline
+00001111111 & 01111111111 & 100\% \\ \hline
+01100000000 & 00001100011 & 80\% \\ \hline
+\end{tabular}
+\end{center}
+
+\section{Conclusions}
+
+The results for the first two inputs listed in the above table show that the model successfully evolved to a local energy minimum and returned a remembered state as its output (a state in the training set $\calT$). Moreover, each output appears to be the remembered state that most closely matches the input. To understand the results for the second two inputs, we note that Equation \eqref{DeltaE} depends only on products of spins and not on any isolated spins. Thus, the model is invariant under the transformation $\sigma_{ij}\rightarrow -\sigma_{ij}$ for all $i,j$ (flip all the spins on the 2D lattice). Consequently, since $10000000000$ and $00001100011$ are states of locally minimum energy (and are therefore remembered), then so are $01111111111$ and $11110011100$. Thus, the second two inputs listed in the above table also evolve to remembered states that most closely match the inputs. Therefore, I conclude that the evolution of a 1D quantum Ising chain together with the two modifications I had proposed can act as a Hopfield network.
+
+The above conclusion supports the possibility that Hopfield networks might permit a quantum interpretation. The next question to ask is the following: How do we interpret the two modifications to the evolution of the Ising model quantum-mechanicallly? In particular, can the two modifications be built into the Hamiltonian for the quantum Ising chain? While it seems easy to explain the first modification, the second modification is less obvious. A speculation is that Modification 2 means the system is ``fuzzy'' in time and therefore requires periodic averaging over time (i.e., the computation of ``expectation values'' $\taubar_k$ over time).
+
+An entirely different possibility is that the two modifications are necessary because the Monty Carlo simulation is not large enough; the two modifications facilitate energy minimization while ensuring nearness to the initial input. If we had exact methods to minimize energy, then perhaps the modifications would not be necessary. 
+If this is the case, then a sufficiently large Monty Carlo simulation would also make the modifications unnecessary.
+
+In any case, if we could obtain a Hamiltonian for a quantum Ising chain such that the Hamiltonian reproduces the same results as the Ising model in this report, then this could lead to the discovery of an underlying quantum field theory for Hopfield networks, and this could lead to new insights into the subject. The success of the model proposed in this report suggest that this line of thinking may have potential.
+
+\begin{thebibliography}{9}
+\bibitem{rojas}
+Rojas, R. \emph{Neural Networks}. Springer-Verlag. Berlin, 1996.
+\bibitem{molignini}
+Molignini, Paolo. ``Analyzing the Two-Dimensional Ising Model with Conformal Field Theory''. Theoretisches Proseminar, Departement Physik, ETH Zurich. March 10, 2013.
+
+\end{thebibliography}
+
+\end{document}

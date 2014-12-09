@@ -1,0 +1,1 @@
+Applied math project where I use the time evolution of a 1D Ising chain to perform nearest neighbor searches, similar to a Hopfield network. The time evolution is implemented as an MC simulation of a 2D Ising model over space-time.
